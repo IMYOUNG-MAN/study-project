@@ -1,25 +1,42 @@
 ---
 name: daily-news
-description: Collect and summarize today's major world news from RSS feeds. Fetches configured feeds, dedupes, categorizes (World/Politics, Economy, Tech, Korea, Science/etc.), picks the top 10+ stories, and writes a dated Korean markdown briefing with English original headline + Korean translation + Korean summary. Use when the user asks for a news briefing, daily news summary, "오늘 뉴스 정리", "세계 소식 요약", or similar.
+description: Collect and summarize news into a dated Korean HTML briefing (English original headline + Korean translation + Korean summary). Two modes — DAILY (default) sweeps configured RSS feeds for today's top world stories across categories; TOPIC mode digs into one subject the user names (person, company, country, event) using RSS + web search over a recent window. Use when the user asks for a news briefing, daily news summary, "오늘 뉴스 정리", "세계 소식 요약", or asks to gather/summarize recent news about a specific topic, e.g. "트럼프 관련 최근 소식 정리해줘", "엔비디아 뉴스 모아줘", "이번 주 중동 상황 요약".
 ---
 
 # Daily News Briefing
 
-Build a dated news briefing from RSS feeds. Output = one Korean markdown file per day.
+Build a dated news briefing. Output = one self-contained Korean HTML file.
 
 ## Inputs
 
 - `feeds.txt` (next to this file) — RSS feed list. Format per line: `CATEGORY | Source Name | URL`. Lines starting `#` are comments.
-- Optional user args: category filter, item count, output dir. Defaults below.
+- Optional user args: topic, category filter, item count, time window, output dir. Defaults below.
+
+## Modes
+
+Pick the mode from the request, then follow that mode's step list.
+
+| | **DAILY** (default) | **TOPIC** |
+|---|---|---|
+| Trigger | No subject named — "오늘 뉴스 정리", `/daily-news` | A subject named — "트럼프 관련 최근 소식", "엔비디아 뉴스", "이번 주 우크라이나 상황" |
+| Sources | `feeds.txt` RSS only | `feeds.txt` RSS **+ WebSearch** (+ WebFetch on promising articles) |
+| Window | last ~36h | last ~7 days (override if user says "오늘"/"이번 주"/"한 달") |
+| Sections | Fixed 4 categories | Sub-themes derived from what was actually found |
+| Count | 10+ | As many as genuinely relevant (aim 6~15). Never pad. |
+| Filename | `YYYY-MM-DD.html` | `YYYY-MM-DD-{topic}.html` |
+| Extra | — | `핵심 요약` TL;DR block at top |
+
+Ambiguous? Subject named wins — go TOPIC. If the user wants both ("오늘 뉴스 + 트럼프 따로"), write two files.
 
 ## Defaults
 
-- Output dir (FIXED): `C:\Users\dladu\OneDrive\바탕 화면\daily new\`. Filename: `YYYY-MM-DD.html` (use today's date). Always write here regardless of the current working directory. Create the dir if missing.
+- Output dir (FIXED): `C:\Users\dladu\OneDrive\바탕 화면\daily new\`. Always write here regardless of the current working directory. Create the dir if missing.
+- Filename: DAILY → `YYYY-MM-DD.html`. TOPIC → `YYYY-MM-DD-{topic}.html` (topic slug from the user's words, e.g. `2026-07-24-트럼프.html`; strip `\/:*?"<>|` and spaces→`-`). If the file exists, append `-2`, `-3`, … rather than overwriting.
 - Output format: a single self-contained styled HTML file (open by double-click in browser). Use the HTML template below.
-- Item count: 10+ total across categories. Skip a category if no fresh items.
-- Freshness: prefer items with pubDate within last ~36h. If feed lacks dates, keep top items as-is.
+- Item count: DAILY 10+ across categories, skip empty categories. TOPIC as many as relevant.
+- Freshness: DAILY ~36h. TOPIC ~7 days. If feed lacks dates, keep top items as-is.
 
-## Steps
+## Steps — DAILY mode
 
 1. **Read config.** Read `feeds.txt`. Group feeds by CATEGORY.
 2. **Fetch feeds in parallel.** Use WebFetch on each URL. Prompt each fetch to return the top 5 items as `title | pubDate | link | one-line gist`. Some feeds fail (blocked/moved) — skip failures silently, note them at the end under "수집 실패".
@@ -31,6 +48,24 @@ Build a dated news briefing from RSS feeds. Output = one Korean markdown file pe
    - 2~3 line Korean summary (what happened, why it matters). No filler.
    - Source name + link.
 6. **Write file.** Fill the HTML template below (one `<article class="card">` per story, grouped under each category `<section>`; drop empty categories). Write to the FIXED output dir `C:\Users\dladu\OneDrive\바탕 화면\daily new\YYYY-MM-DD.html` (create the dir if missing). Escape `&`, `<`, `>` in any text. Confirm path to user, show a short console preview (top 3 headlines).
+
+## Steps — TOPIC mode
+
+The user named a subject. Everything is about that subject; unrelated headlines are noise, drop them.
+
+1. **Pin the topic.** Restate it in one line and settle the window before fetching (default last 7 days; "오늘"→24h, "이번 주"→7d, "최근 한 달"→30d). Resolve vague references to a concrete search term (e.g. "대통령" → who, which country).
+2. **Build query set.** Write 3~6 search queries covering different angles, mixing Korean and English, e.g. for 트럼프: `Trump latest news`, `Trump tariff`, `Trump 발언`, `트럼프 한국`. Include the window in the query when it helps (`this week`).
+3. **Fetch in parallel.**
+   - WebSearch each query.
+   - WebFetch each `feeds.txt` feed, but this time ask the fetch to return only items matching the topic (return "none" if the feed has none).
+   - WebFetch 3~8 of the most substantive article URLs the search surfaced, for real detail beyond the snippet.
+   Failures → skip silently, list under "수집 실패".
+4. **Filter hard.** Keep only items where the topic is the actual subject, not a passing mention. Drop opinion columns, listicles, and anything outside the window. If a date is unclear, verify it or drop it.
+5. **Dedupe & group.** Merge same-event coverage. Then group into 2~5 sub-themes that emerge from what was found — not the fixed 4 categories. Name them plainly (e.g. `관세·통상`, `사법 리스크`, `한반도 관련`, `발언·정치 동향`). Order sub-themes by importance.
+6. **Write TL;DR.** 3~5 bullets in Korean: what moved on this topic in the window, the through-line, and anything imminent (scheduled ruling, vote, deadline). Only what the sources support.
+7. **Translate + summarize** each story — same format as DAILY step 5.
+8. **Write file.** Same HTML template, with these swaps: `<h1>` → `🔎 {topic} 최근 소식`; `.meta` → `{window} · 검색 {Q}건 + 피드 {N}개 · 선정 {M}건`; insert the `핵심 요약` block (template below) right after `</header>`; `<h2>` = sub-theme names (drop the fixed emoji set, use `📌` or a fitting emoji). Save as `YYYY-MM-DD-{topic}.html`. Confirm path, preview top 3.
+9. **Nothing found?** Say so plainly and stop. Do not fill the gap with background knowledge or older articles — a topic can simply be quiet in the window.
 
 ## Output template (HTML)
 
@@ -62,6 +97,10 @@ Write the whole file as this self-contained HTML. Replace `{...}` placeholders. 
   .src a{color:var(--accent);text-decoration:none}
   .src a:hover{text-decoration:underline}
   footer{margin-top:36px;color:var(--sub);font-size:.82rem;border-top:1px solid var(--line);padding-top:16px}
+  .tldr{background:var(--chip);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:16px 20px;margin:0 0 8px}
+  .tldr h2{margin:0 0 8px;font-size:1rem;border:0;padding:0;color:var(--chiptx)}
+  .tldr ul{margin:0;padding-left:20px}
+  .tldr li{margin:4px 0}
 </style>
 </head>
 <body>
@@ -90,9 +129,25 @@ Write the whole file as this self-contained HTML. Replace `{...}` placeholders. 
 </html>
 ```
 
+### TOPIC mode extra block
+
+Insert directly after `</header>`, before the first `<section>`:
+
+```html
+  <div class="tldr">
+    <h2>핵심 요약</h2>
+    <ul>
+      <li>{한 줄 요점}</li>
+      <li>{한 줄 요점}</li>
+      <li>{한 줄 요점}</li>
+    </ul>
+  </div>
+```
+
 ## Notes
 
-- Never invent facts or dates. Only summarize what the feed content actually says. If unsure of a detail, omit it.
+- Never invent facts or dates. Only summarize what the source content actually says. If unsure of a detail, omit it.
 - Keep headlines verbatim; only the summary is your own wording.
-- If the user wants a different language mix, count, or categories, honor that over defaults.
-- To add/remove sources, edit `feeds.txt` — no code change needed.
+- TOPIC mode: never answer from your own background knowledge of the subject — everything in the file must trace to a fetched source with a link. Model training data is stale by definition; the whole point is the fresh window.
+- If the user wants a different language mix, count, window, or categories, honor that over defaults.
+- To add/remove RSS sources, edit `feeds.txt` — no code change needed. (WebSearch in TOPIC mode is not limited to `feeds.txt`.)
