@@ -9,23 +9,45 @@
 
 ## 설치
 
-Claude Code 개인 스킬 폴더에 `daily-news` 디렉터리를 넣으면 끝. 재시작 없이 바로 인식됨.
+Claude Code에서 두 줄:
+
+```
+/plugin marketplace add IMYOUNG-MAN/study-project
+/plugin install daily-news@study-project
+```
+
+업데이트:
+
+```
+/plugin marketplace update study-project
+```
+
+설치 확인: `/daily-news` 자동완성에 뜨면 성공.
+
+<details>
+<summary>수동 설치 (플러그인 안 쓰고 싶으면)</summary>
 
 ```bash
-# 이 저장소 기준
-cp -r skills/daily-news ~/.claude/skills/
+git clone https://github.com/IMYOUNG-MAN/study-project
+cp -r study-project/skills/daily-news ~/.claude/skills/
 ```
+
+PowerShell:
+
+```powershell
+Copy-Item -Recurse -Force study-project\skills\daily-news $HOME\.claude\skills\
+```
+
+</details>
 
 폴더 구성:
 
 ```
-~/.claude/skills/daily-news/
+daily-news/
 ├── SKILL.md      # 스킬 본체 (지침 + HTML 템플릿)
 ├── feeds.txt     # RSS 피드 목록 (여기만 고치면 소스 추가/삭제)
 └── README.md
 ```
-
-설치 확인: Claude Code에서 `/daily-news` 자동완성에 뜨면 성공.
 
 ---
 
@@ -87,8 +109,14 @@ RSS만으론 특정 주제 커버가 얇아서, 주제 모드는 **웹 검색까
 
 TOPIC 모드는 3번 앞에 "주제 검색어 3~6개 생성 → 웹 검색 → 주제 무관 기사 제거"가 붙고, 4번이 "소주제별 묶기"로 바뀜.
 
-**저장 위치(고정):** `C:\Users\dladu\OneDrive\바탕 화면\daily new\`
-(다른 경로로 바꾸려면 `SKILL.md`의 `Output dir (FIXED)` 한 줄 수정.)
+### 저장 위치
+
+기본값은 홈 폴더의 `daily-news/` (Windows는 `%USERPROFILE%\daily-news\`). 위에서부터 먼저 걸리는 걸 씀:
+
+1. 요청에 직접 쓴 경로 — `바탕화면에 저장해줘`
+2. 환경변수 `DAILY_NEWS_DIR`
+3. 기억해둔 사용자 기본 경로 (`이제부터 여기 저장해` 라고 하면 기억함)
+4. 기본값 `~/daily-news/`
 
 ---
 
@@ -116,6 +144,8 @@ CATEGORY | Source Name | URL
 정치·국제 | BBC World | http://feeds.bbci.co.uk/news/world/rss.xml
 국내      | 경향신문 정치 | https://www.khan.co.kr/rss/rssdata/politic_news.xml
 ```
+
+기본 피드는 **한국 독자 기준** — 영미권 국제뉴스 + 국내지 조합에 카테고리명도 한국어. 다른 나라/언어면 `feeds.txt`를 통째로 갈아끼우면 됨. 카테고리 이름은 아무 문자열이나 되고, 스킬이 그걸로 묶음.
 
 **작동 확인된 피드:** BBC(World/Business/Technology), NPR World, CBS World, Al Jazeera, CNBC, 한국경제(정치/경제), 경향신문(정치/경제/전체)
 

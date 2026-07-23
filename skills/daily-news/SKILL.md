@@ -30,7 +30,12 @@ Ambiguous? Subject named wins — go TOPIC. If the user wants both ("오늘 뉴�
 
 ## Defaults
 
-- Output dir (FIXED): `C:\Users\dladu\OneDrive\바탕 화면\daily new\`. Always write here regardless of the current working directory. Create the dir if missing.
+- Output dir, first match wins:
+  1. A path the user names in the request ("바탕화면에 저장해줘", "~/news 에").
+  2. `$DAILY_NEWS_DIR` if set.
+  3. A path recorded as this user's preference in memory.
+  4. Default `~/daily-news/` (Windows → `%USERPROFILE%\daily-news\`).
+  Always resolve to an absolute path and write there regardless of the current working directory. Create the dir if missing. Never write into the repo or the plugin's own directory — a plugin update wipes it.
 - Filename: DAILY → `YYYY-MM-DD.html`. TOPIC → `YYYY-MM-DD-{topic}.html` (topic slug from the user's words, e.g. `2026-07-24-트럼프.html`; strip `\/:*?"<>|` and spaces→`-`). If the file exists, append `-2`, `-3`, … rather than overwriting.
 - Output format: a single self-contained styled HTML file (open by double-click in browser). Use the HTML template below.
 - Item count: DAILY 10+ across categories, skip empty categories. TOPIC as many as relevant.
@@ -47,7 +52,7 @@ Ambiguous? Subject named wins — go TOPIC. If the user wants both ("오늘 뉴�
    - Korean translation of the headline.
    - 2~3 line Korean summary (what happened, why it matters). No filler.
    - Source name + link.
-6. **Write file.** Fill the HTML template below (one `<article class="card">` per story, grouped under each category `<section>`; drop empty categories). Write to the FIXED output dir `C:\Users\dladu\OneDrive\바탕 화면\daily new\YYYY-MM-DD.html` (create the dir if missing). Escape `&`, `<`, `>` in any text. Confirm path to user, show a short console preview (top 3 headlines).
+6. **Write file.** Fill the HTML template below (one `<article class="card">` per story, grouped under each category `<section>`; drop empty categories). Write `YYYY-MM-DD.html` to the resolved output dir (see Defaults; create it if missing). Escape `&`, `<`, `>` in any text. Confirm path to user, show a short console preview (top 3 headlines).
 
 ## Steps — TOPIC mode
 
