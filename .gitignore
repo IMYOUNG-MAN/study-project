@@ -1,0 +1,8 @@
+# Local news output (skill writes to a fixed OneDrive path, not the repo)
+news/
+
+# gstack local artifacts
+.gstack/
+
+# Temp preview files
+_preview.html
