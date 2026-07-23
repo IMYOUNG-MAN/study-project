@@ -1,38 +1,18 @@
 # study-project
 
-Claude Code 스킬을 만들어 두는 저장소. 플러그인 마켓플레이스로도 동작함.
+Claude Code 스킬 실험용 저장소.
 
-## 설치
+## 이사 간 스킬
 
-Claude Code에서:
-
-```
-/plugin marketplace add IMYOUNG-MAN/study-project
-```
-
-그 다음 원하는 플러그인 설치:
-
-```
-/plugin install daily-news@study-project
-```
-
-업데이트는 `/plugin marketplace update study-project`.
-
-## 수록 플러그인
-
-| 이름 | 설명 |
+| 스킬 | 새 주소 |
 |---|---|
-| [`daily-news`](skills/daily-news/) | 뉴스를 모아 **영어 원문 + 한국어 번역 + 요약** HTML 브리핑으로 저장. DAILY 모드는 RSS로 오늘의 세계 소식 전반, TOPIC 모드는 특정 주제를 RSS + 웹 검색으로 파고듦. |
+| `daily-news` | **https://github.com/IMYOUNG-MAN/daily-news** |
 
-각 플러그인 상세 사용법은 위 링크의 README 참고.
-
-## 구조
+`daily-news`는 독립 저장소로 분리됨. 설치:
 
 ```
-study-project/
-├── .claude-plugin/
-│   ├── marketplace.json   # 마켓플레이스 카탈로그
-│   └── plugin.json        # 플러그인 매니페스트
-└── skills/
-    └── daily-news/        # 스킬 본체
+/plugin marketplace add IMYOUNG-MAN/daily-news
+/plugin install daily-news@daily-news
 ```
+
+이 저장소의 `skills/daily-news/`는 삭제됨 — 두 곳에 복사본이 있으면 어느 쪽을 고쳤는지 헷갈리기 때문. 이력은 커밋 로그에 남아 있음.
